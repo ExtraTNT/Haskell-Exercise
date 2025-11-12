@@ -234,7 +234,7 @@ sort (x:xs) =
 
 -- groups equal values together
 -- "Hello" -> ["H","e","ll","o"]
--- [1,2,3,4,2] -> [[1], [2,2], [3], [4]]
+-- [1,2,2,3,4,2] -> [[1], [2,2], [3], [4], [2]]
 group :: Eq a => [a] -> [[a]]
 group [] = []
 group (x:xs) = (x : takeWhile (== x) xs) : group (dropWhile (== x) xs)
