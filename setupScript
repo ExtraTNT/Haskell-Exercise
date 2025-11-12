@@ -1,0 +1,54 @@
+
+#!/usr/bin/env bash
+set -e
+
+echo ">>> Updating system..."
+sudo apt update -y
+sudo apt install -y curl gnupg build-essential libtinfo-dev libffi-dev libgmp-dev zlib1g-dev git
+
+echo ">>> Installing GHCup (Haskell toolchain manager)..."
+curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | BOOTSTRAP_HASKELL_NONINTERACTIVE=1 sh
+
+if ! grep -q 'ghcup/env' ~/.profile 2>/dev/null; then
+  echo ">>> Adding GHCup PATH setup to ~/.profile"
+  echo '[ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env"' >> ~/.profile
+fi
+
+# Load ghcup env vars
+if [ -f "$HOME/.ghcup/env" ]; then
+  source "$HOME/.ghcup/env"
+else
+  export PATH="$HOME/.ghcup/bin:$PATH"
+fi
+
+echo ">>> Installing latest GHC, cabal, stack, and HLS (Haskell Language Server)..."
+ghcup install ghc recommended
+ghcup install cabal recommended
+ghcup install hls recommended
+ghcup install stack recommended
+
+ghcup set ghc recommended
+ghcup set cabal recommended
+
+echo ">>> Verifying installation..."
+ghc --version
+cabal --version
+stack --version
+#haskell-language-server --version
+
+echo ">>> Installing VSCode..."
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+sudo install -o root -g root -m 644 packages.microsoft.gpg /usr/share/keyrings/
+sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] \
+https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+sudo apt update
+sudo apt install -y code
+rm -f packages.microsoft.gpg
+
+echo ">>> Installing VSCode Haskell extension..."
+code --install-extension haskell.haskell --force
+
+echo ">>> Setting type preview to ghci"
+echo ':set +t' >> ~/.ghci
+
+echo ">>> Done!"
